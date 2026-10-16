@@ -1,0 +1,6 @@
+{
+  "name": "WOW LAPHING POS",
+  "description": "Ultra-clean, high-speed mobile Point of Sale app for WOW LAPHING street food stall with giant touch buttons, local storage persistence, and one-tap CSV sales export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
