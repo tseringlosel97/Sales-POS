@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>WOW LAPHING POS</title>
+    <meta name="description" content="Ultra-clean, high-speed mobile Point of Sale app for WOW LAPHING street food stall with giant touch buttons, local storage persistence, and one-tap CSV sales export." />
+    <meta property="og:title" content="WOW LAPHING POS" />
+    <meta property="og:description" content="Ultra-clean, high-speed mobile Point of Sale app for WOW LAPHING street food stall with giant touch buttons, local storage persistence, and one-tap CSV sales export." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Tailwind CSS via CDN as requested -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                warmOrange: '#f97316',
+                deepAmber: '#d97706',
+                crimson: '#dc2626',
+                darkRose: '#be123c',
+                emerald: '#059669',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      * {
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+      }
+      body {
+        overscroll-behavior-y: none;
+        font-variant-numeric: tabular-nums;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+      /* Custom safe-area padding for mobile edge-to-edge screens */
+      .pb-safe {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+      }
+    </style>
+  </head>
+  <body class="h-full flex flex-col bg-slate-900 text-slate-100 overflow-hidden antialiased">
+
+    <!-- Top Minimal Sticky Header -->
+    <header class="flex-none bg-slate-950/80 backdrop-blur border-b border-slate-800/80 px-4 py-2.5 z-20">
+      <div class="max-w-md mx-auto flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <div>
+            <h1 class="text-sm font-black tracking-tight text-white leading-tight">WOW LAPHING</h1>
+            <p id="liveClock" class="text-[11px] font-mono text-slate-400 leading-none">00:00:00</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5">
+          <button id="btnOpenSalesLog" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-semibold text-slate-200 border border-slate-700/80 transition flex items-center gap-1">
+            <span>📊</span>
+            <span>Sales Log</span>
+            <span id="headerOrdersCount" class="bg-slate-700 text-slate-300 px-1.5 py-0.2 rounded text-[10px] font-bold ml-0.5">0</span>
+          </button>
+          <button id="btnQuickExportCSV" title="Instant CSV Download" class="px-2.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 active:scale-95 text-xs font-semibold text-blue-300 border border-blue-500/30 transition flex items-center gap-1">
+            <span>📥</span>
+            <span>CSV</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main POS Body (5 Hardcoded Items + Scroll Down for Recent Orders) -->
+    <main class="flex-1 max-w-md w-full mx-auto p-3 overflow-y-auto overscroll-y-contain space-y-3 pb-36">
+      <!-- Section Label & Token ID -->
+      <div class="flex items-center justify-between px-1 text-xs font-bold text-slate-400">
+        <span>MENU ITEMS (TAP TO ADD)</span>
+        <span id="activeTicketToken" class="text-amber-400 font-mono">TICKET #01</span>
+      </div>
+
+      <!-- 5 Giant Color-Coded Item Cards -->
+      <div class="space-y-2.5">
+        
+        <!-- Item 1: WaiWai Laphing (Dry) - ₹70 [Warm Orange] -->
+        <div class="relative flex items-center bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-3.5 shadow-lg shadow-orange-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
+          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_ww_dry')">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-extrabold tracking-tight leading-tight">WaiWai Laphing (Dry)</h3>
+                <span id="qty_badge_item_ww_dry" class="hidden px-2 py-0.5 rounded-full bg-white text-orange-700 text-xs font-black shadow-sm">x0</span>
+              </div>
+              <p class="text-xs font-medium text-orange-100/90 mt-0.5">Rolled · Crispy WaiWai Crunch</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xl font-black tracking-tight">₹70</span>
+            </div>
+          </div>
+          <!-- Dual Action Controls (+ / -) -->
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+            <button id="minus_item_ww_dry" onclick="decrementItem('item_ww_dry')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease WaiWai Dry">
+              &minus;
+            </button>
+            <button onclick="incrementItem('item_ww_dry')" class="w-10 h-10 rounded-xl bg-white text-orange-600 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase WaiWai Dry">
+              &plus;
+            </button>
+          </div>
+        </div>
+
+        <!-- Item 2: WaiWai Laphing (Soup) - ₹70 [Deep Amber] -->
+        <div class="relative flex items-center bg-gradient-to-r from-amber-600 to-amber-700 rounded-2xl p-3.5 shadow-lg shadow-amber-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
+          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_ww_soup')">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-extrabold tracking-tight leading-tight">WaiWai Laphing (Soup)</h3>
+                <span id="qty_badge_item_ww_soup" class="hidden px-2 py-0.5 rounded-full bg-white text-amber-800 text-xs font-black shadow-sm">x0</span>
+              </div>
+              <p class="text-xs font-medium text-amber-100/90 mt-0.5">Tangy Spicy Garlic Broth</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xl font-black tracking-tight">₹70</span>
+            </div>
+          </div>
+          <!-- Dual Action Controls (+ / -) -->
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+            <button id="minus_item_ww_soup" onclick="decrementItem('item_ww_soup')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease WaiWai Soup">
+              &minus;
+            </button>
+            <button onclick="incrementItem('item_ww_soup')" class="w-10 h-10 rounded-xl bg-white text-amber-700 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase WaiWai Soup">
+              &plus;
+            </button>
+          </div>
+        </div>
+
+        <!-- Item 3: Chicken Laphing (Dry) - ₹90 [Crimson / Red] -->
+        <div class="relative flex items-center bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-3.5 shadow-lg shadow-red-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
+          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_chk_dry')">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-extrabold tracking-tight leading-tight">Chicken Laphing (Dry)</h3>
+                <span id="qty_badge_item_chk_dry" class="hidden px-2 py-0.5 rounded-full bg-white text-red-700 text-xs font-black shadow-sm">x0</span>
+              </div>
+              <p class="text-xs font-medium text-red-100/90 mt-0.5">Spiced Chicken Shreds · Dry Roll</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xl font-black tracking-tight">₹90</span>
+            </div>
+          </div>
+          <!-- Dual Action Controls (+ / -) -->
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+            <button id="minus_item_chk_dry" onclick="decrementItem('item_chk_dry')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease Chicken Dry">
+              &minus;
+            </button>
+            <button onclick="incrementItem('item_chk_dry')" class="w-10 h-10 rounded-xl bg-white text-red-700 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase Chicken Dry">
+              &plus;
+            </button>
+          </div>
+        </div>
+
+        <!-- Item 4: Chicken Laphing (Soup) - ₹90 [Dark Rose] -->
+        <div class="relative flex items-center bg-gradient-to-r from-rose-700 to-rose-800 rounded-2xl p-3.5 shadow-lg shadow-rose-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
+          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_chk_soup')">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-extrabold tracking-tight leading-tight">Chicken Laphing (Soup)</h3>
+                <span id="qty_badge_item_chk_soup" class="hidden px-2 py-0.5 rounded-full bg-white text-rose-800 text-xs font-black shadow-sm">x0</span>
+              </div>
+              <p class="text-xs font-medium text-rose-100/90 mt-0.5">Cold Sour Garlic Soup · Shredded</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xl font-black tracking-tight">₹90</span>
+            </div>
+          </div>
+          <!-- Dual Action Controls (+ / -) -->
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+            <button id="minus_item_chk_soup" onclick="decrementItem('item_chk_soup')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease Chicken Soup">
+              &minus;
+            </button>
+            <button onclick="incrementItem('item_chk_soup')" class="w-10 h-10 rounded-xl bg-white text-rose-800 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase Chicken Soup">
+              &plus;
+            </button>
+          </div>
+        </div>
+
+        <!-- Item 5: Original Laphing - ₹90 [Emerald / Green] -->
+        <div class="relative flex items-center bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-2xl p-3.5 shadow-lg shadow-emerald-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
+          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_orig')">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-extrabold tracking-tight leading-tight">Original Laphing</h3>
+                <span id="qty_badge_item_orig" class="hidden px-2 py-0.5 rounded-full bg-white text-emerald-800 text-xs font-black shadow-sm">x0</span>
+              </div>
+              <p class="text-xs font-medium text-emerald-100/90 mt-0.5">Classic Mung Bean Jelly · Seitan</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xl font-black tracking-tight">₹90</span>
+            </div>
+          </div>
+          <!-- Dual Action Controls (+ / -) -->
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+            <button id="minus_item_orig" onclick="decrementItem('item_orig')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease Original Laphing">
+              &minus;
+            </button>
+            <button onclick="incrementItem('item_orig')" class="w-10 h-10 rounded-xl bg-white text-emerald-700 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase Original Laphing">
+              &plus;
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent Orders Feed (Visible on scroll down) -->
+      <section class="pt-3 border-t border-slate-800/80">
+        <div class="flex items-center justify-between mb-2.5 px-1">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider">Recent Orders</span>
+            <span class="text-[10px] bg-slate-800 text-amber-400 font-bold px-1.5 py-0.5 rounded border border-slate-700/60 font-mono">Live</span>
+          </div>
+          <button onclick="openSalesLogModal()" class="text-xs text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1 transition active:scale-95">
+            <span>View All</span>
+            <span>&rarr;</span>
+          </button>
+        </div>
+
+        <!-- Shows at least 2 recent orders -->
+        <div id="recentOrdersFeed" class="space-y-2">
+          <!-- Populated live via JS -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Minimal Live Ticket Bar (Fixed Bottom Screen) -->
+    <footer class="flex-none bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 pt-3 pb-safe z-30">
+      <div class="max-w-md mx-auto space-y-2.5">
+        <!-- Ticket Meta: Total & Quick Reset -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-black text-white" id="ticketTotalAmount">₹0</span>
+            <span class="text-xs font-semibold text-slate-400" id="ticketItemsCount">(0 Items)</span>
+          </div>
+
+          <!-- Payment Method Pill Switches (Cash vs UPI) -->
+          <div class="flex items-center bg-slate-800 p-0.5 rounded-xl border border-slate-700/80">
+            <button id="payMethodCash" onclick="setPaymentMethod('Cash')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-white shadow-sm flex items-center gap-1">
+              <span>💵</span>
+              <span>Cash</span>
+            </button>
+            <button id="payMethodUPI" onclick="setPaymentMethod('UPI')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1">
+              <span>📱</span>
+              <span>UPI</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Action Row: Complete Order (Full Width) + Small Reset Button -->
+        <div class="flex items-center gap-2">
+          <button id="btnResetTicket" onclick="resetActiveTicket()" title="Reset Ticket" class="px-3.5 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-400 hover:text-white font-bold text-xs flex items-center justify-center gap-1 border border-slate-700/70 transition">
+            <span>↺</span>
+            <span>Reset</span>
+          </button>
+
+          <button id="btnCompleteOrder" onclick="completeOrder()" disabled class="flex-1 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-black text-base shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition disabled:opacity-40 disabled:pointer-events-none">
+            <span>✓ Complete Order</span>
+            <span id="btnPayAmount" class="font-mono text-sm bg-black/20 px-2 py-0.5 rounded-md">₹0</span>
+          </button>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Sales Log & CSV Export Modal / Tab Overlay -->
+    <div id="salesLogModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex-col justify-end transition-opacity">
+      <div class="bg-slate-900 border-t border-slate-700 rounded-t-3xl max-w-md w-full mx-auto max-h-[88vh] flex flex-col pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200">
+        <!-- Drawer Header -->
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-black text-white">Daily Sales Log</h2>
+            <p id="salesDateSubtitle" class="text-xs text-slate-400">WOW LAPHING POS Register</p>
+          </div>
+          <button onclick="closeSalesLogModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white text-lg flex items-center justify-center active:scale-95">
+            &times;
+          </button>
+        </div>
+
+        <!-- Drawer Content -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4">
+          <!-- Daily Summary Bar (Clean Metric Cards) -->
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Today's Revenue</span>
+              <p id="sumRevenue" class="text-xl font-black text-white mt-0.5">₹0</p>
+              <span id="sumAvgTicket" class="text-[10px] text-slate-400">Avg ₹0 / order</span>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Orders</span>
+              <p id="sumTotalOrders" class="text-xl font-black text-emerald-400 mt-0.5">0</p>
+              <span id="sumTotalItems" class="text-[10px] text-slate-400">0 items sold</span>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cash Total</span>
+              <p id="sumCashTotal" class="text-lg font-bold text-slate-200 mt-0.5">₹0</p>
+            </div>
+            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3">
+              <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">UPI Total</span>
+              <p id="sumUPITotal" class="text-lg font-bold text-blue-400 mt-0.5">₹0</p>
+            </div>
+          </div>
+
+          <!-- Big "Download CSV" Action Button -->
+          <button onclick="downloadSalesCSV()" class="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-950/50 transition">
+            <span>📥</span>
+            <span>Download CSV Sales Log</span>
+          </button>
+
+          <!-- Transaction Log Table / List -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Recent Transactions</span>
+              <span id="txCountBadge" class="text-[10px] font-mono text-slate-500">0 orders</span>
+            </div>
+            <div id="txListContainer" class="space-y-2">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Clear Day Data (In-App Confirmation Reset) -->
+          <div class="pt-4 border-t border-slate-800">
+            <button id="btnTriggerResetDay" onclick="openResetConfirmModal()" class="w-full py-2.5 rounded-xl border border-red-900/60 bg-red-950/20 text-red-400 hover:bg-red-950/40 active:scale-98 text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <span>⚠️</span>
+              <span>Reset Day (Clear Today's Data)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- In-App Reset Day Confirmation Modal (Zero native browser confirm/alert) -->
+    <div id="resetConfirmModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[70] hidden items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-950 border border-red-800/60 text-red-400 flex items-center justify-center text-xl flex-none">
+            ⚠️
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white leading-tight">Reset Today's Register?</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Start fresh for today / tomorrow</p>
+          </div>
+        </div>
+        
+        <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+          This will permanently erase all saved transaction records for today, reset total sales to <strong class="text-white">₹0</strong>, and restart the ticket sequence at <strong class="text-amber-400">#01</strong>.
+        </p>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button onclick="closeResetConfirmModal()" class="flex-1 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-xs border border-slate-700 transition">
+            Cancel
+          </button>
+          <button id="btnConfirmResetExecute" onclick="executeResetDayData()" class="flex-1 h-11 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white font-black text-xs shadow-lg shadow-red-950/50 transition flex items-center justify-center gap-1.5">
+            <span>🗑️</span>
+            <span>Yes, Clear All</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Toast Notification -->
+    <div id="quickToast" class="fixed top-4 left-1/2 -translate-x-1/2 -translate-y-20 bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl transition-transform duration-200 pointer-events-none z-[80] flex items-center gap-1.5">
+      <span id="toastText">Order Completed!</span>
+    </div>
+
+    <!-- Core POS Vanilla JavaScript Engine -->
+    <script>
+      (function() {
+        // --- 1. HARDCODED MENU & STATE ---
+        const MENU_ITEMS = {
+          item_ww_dry:  { id: 'item_ww_dry',  name: 'WaiWai Laphing (Dry)',  price: 70 },
+          item_ww_soup: { id: 'item_ww_soup', name: 'WaiWai Laphing (Soup)', price: 70 },
+          item_chk_dry: { id: 'item_chk_dry', name: 'Chicken Laphing (Dry)', price: 90 },
+          item_chk_soup:{ id: 'item_chk_soup',name: 'Chicken Laphing (Soup)',price: 90 },
+          item_orig:    { id: 'item_orig',    name: 'Original Laphing',       price: 90 }
+        };
+
+        const STORAGE_KEY_ORDERS = 'wow_laph_orders_v2';
+        const STORAGE_KEY_TOKEN  = 'wow_laph_token_v2';
+        const STORAGE_KEY_SEEDED = 'wow_laph_seeded_v2';
+
+        // Active Ticket State
+        let activeTicket = {
+          item_ww_dry: 0,
+          item_ww_soup: 0,
+          item_chk_dry: 0,
+          item_chk_soup: 0,
+          item_orig: 0
+        };
+
+        let paymentMethod = 'Cash'; // 'Cash' | 'UPI'
+        let orderToken = 1;
+
+        // Load token from localStorage
+        try {
+          const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+          if (savedToken) orderToken = parseInt(savedToken, 10) || 1;
+        } catch(e) {}
+
+        // --- 2. AUDIO SYNTHESIS & HAPTIC FEEDBACK ---
+        let audioCtx = null;
+        function getAudioContext() {
+          if (!audioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) audioCtx = new AudioContext();
+          }
+          if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          return audioCtx;
+        }
+
+        function playSound(type) {
+          try {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            if (type === 'add') {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(520, now);
+              osc.frequency.exponentialRampToValueAtTime(780, now + 0.04);
+              gain.gain.setValueAtTime(0.12, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now);
+              osc.stop(now + 0.05);
+            } else if (type === 'minus') {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(420, now);
+              osc.frequency.exponentialRampToValueAtTime(280, now + 0.04);
+              gain.gain.setValueAtTime(0.1, now);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(now);
+              osc.stop(now + 0.05);
+            } else if (type === 'complete') {
+              [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+                gain.gain.setValueAtTime(0.15, now + idx * 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.28);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + idx * 0.05);
+                osc.stop(now + idx * 0.05 + 0.28);
+              });
+            }
+          } catch(e) {}
+
+          // Light haptic feedback on supported mobile devices
+          if (navigator.vibrate) {
+            navigator.vibrate(type === 'complete' ? [30, 50, 40] : 25);
+          }
+        }
+
+        // --- 3. TOAST NOTIFICATIONS ---
+        function showToast(msg) {
+          const toast = document.getElementById('quickToast');
+          const toastText = document.getElementById('toastText');
+          toastText.textContent = msg;
+          toast.classList.remove('-translate-y-20');
+          toast.classList.add('translate-y-0');
+          setTimeout(() => {
+            toast.classList.remove('translate-y-0');
+            toast.classList.add('-translate-y-20');
+          }, 1800);
+        }
+
+        // --- 4. ITEM MANIPULATION (+ / - / CARD CLICK) ---
+        window.handleCardClick = function(itemId) {
+          incrementItem(itemId);
+        };
+
+        window.incrementItem = function(itemId) {
+          activeTicket[itemId] = (activeTicket[itemId] || 0) + 1;
+          playSound('add');
+          renderTicketUI();
+        };
+
+        window.decrementItem = function(itemId) {
+          if (activeTicket[itemId] > 0) {
+            activeTicket[itemId] -= 1;
+            playSound('minus');
+            renderTicketUI();
+          }
+        };
+
+        window.setPaymentMethod = function(method) {
+          paymentMethod = method;
+          const cashBtn = document.getElementById('payMethodCash');
+          const upiBtn = document.getElementById('payMethodUPI');
+
+          if (method === 'Cash') {
+            cashBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-white shadow-sm flex items-center gap-1';
+            upiBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1';
+          } else {
+            cashBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1';
+            upiBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow-sm flex items-center gap-1';
+          }
+        };
+
+        window.resetActiveTicket = function() {
+          const totalItems = Object.values(activeTicket).reduce((a, b) => a + b, 0);
+          if (totalItems === 0) return;
+          activeTicket = {
+            item_ww_dry: 0,
+            item_ww_soup: 0,
+            item_chk_dry: 0,
+            item_chk_soup: 0,
+            item_orig: 0
+          };
+          playSound('minus');
+          renderTicketUI();
+          showToast('Ticket Reset');
+        };
+
+        // --- 5. TICKET CALCULATIONS & UI RENDERING ---
+        function calculateTicket() {
+          let itemCount = 0;
+          let totalAmount = 0;
+
+          Object.keys(activeTicket).forEach(id => {
+            const qty = activeTicket[id];
+            itemCount += qty;
+            totalAmount += qty * MENU_ITEMS[id].price;
+          });
+
+          return { itemCount, totalAmount };
+        }
+
+        function renderTicketUI() {
+          const { itemCount, totalAmount } = calculateTicket();
+
+          // Update card badges & minus buttons
+          Object.keys(activeTicket).forEach(id => {
+            const qty = activeTicket[id];
+            const badge = document.getElementById(`qty_badge_${id}`);
+            const minusBtn = document.getElementById(`minus_${id}`);
+
+            if (badge) {
+              if (qty > 0) {
+                badge.textContent = `x${qty}`;
+                badge.classList.remove('hidden');
+              } else {
+                badge.classList.add('hidden');
+              }
+            }
+
+            if (minusBtn) {
+              if (qty > 0) {
+                minusBtn.classList.remove('opacity-30', 'pointer-events-none');
+              } else {
+                minusBtn.classList.add('opacity-30', 'pointer-events-none');
+              }
+            }
+          });
+
+          // Bottom Bar UI
+          document.getElementById('ticketTotalAmount').textContent = `₹${totalAmount}`;
+          document.getElementById('ticketItemsCount').textContent = `(${itemCount} ${itemCount === 1 ? 'Item' : 'Items'})`;
+          document.getElementById('btnPayAmount').textContent = `₹${totalAmount}`;
+
+          // Enable / Disable Complete Order
+          const btnComplete = document.getElementById('btnCompleteOrder');
+          btnComplete.disabled = itemCount === 0;
+
+          document.getElementById('activeTicketToken').textContent = `TICKET #${String(orderToken).padStart(2, '0')}`;
+        }
+
+        // --- 6. COMPLETE ORDER & PERSISTENCE ---
+        window.completeOrder = function() {
+          const { itemCount, totalAmount } = calculateTicket();
+          if (itemCount === 0) return;
+
+          const now = new Date();
+          const itemsDetailList = [];
+          Object.keys(activeTicket).forEach(id => {
+            const qty = activeTicket[id] || 0;
+            if (qty > 0) {
+              const itemObj = MENU_ITEMS[id];
+              const itemName = itemObj ? itemObj.name : id;
+              itemsDetailList.push(`${qty}x ${itemName}`);
+            }
+          });
+          const itemsDetail = itemsDetailList.length > 0 ? itemsDetailList.join(' + ') : `${itemCount}x Laphing Item`;
+
+          const transaction = {
+            id: `ORD-${Date.now()}`,
+            token: orderToken,
+            timestamp: now.toISOString(),
+            date: now.toISOString().split('T')[0],
+            time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            itemsCount: itemCount,
+            itemsDetail: itemsDetail,
+            paymentMethod: paymentMethod,
+            totalAmount: totalAmount
+          };
+
+          // Save to LocalStorage
+          saveTransaction(transaction);
+
+          // Audio & Visual Alert
+          playSound('complete');
+          showToast(`Order #${String(orderToken).padStart(2, '0')} Complete (₹${totalAmount})`);
+
+          // Advance token
+          orderToken += 1;
+          try {
+            localStorage.setItem(STORAGE_KEY_TOKEN, orderToken.toString());
+          } catch(e) {}
+
+          // Reset active ticket
+          activeTicket = {
+            item_ww_dry: 0,
+            item_ww_soup: 0,
+            item_chk_dry: 0,
+            item_chk_soup: 0,
+            item_orig: 0
+          };
+
+          renderTicketUI();
+          updateHeaderCount();
+          renderRecentOrdersFeed();
+        };
+
+        // --- 7. RECENT ORDERS FEED (MAIN SCREEN SCROLL-DOWN) ---
+        function renderRecentOrdersFeed() {
+          const container = document.getElementById('recentOrdersFeed');
+          if (!container) return;
+
+          const allTx = getStoredTransactions();
+          const today = new Date().toISOString().split('T')[0];
+          const todayTx = allTx.filter(t => t.date === today);
+
+          if (todayTx.length === 0) {
+            container.innerHTML = `
+              <div class="bg-slate-800/40 border border-dashed border-slate-700/60 rounded-xl p-3.5 text-center text-xs text-slate-500">
+                No orders recorded yet today.<br>Completed orders will appear right here!
+              </div>
+            `;
+            return;
+          }
+
+          // Show at least 2 recent orders (and up to 4 recent orders)
+          const recentOrders = todayTx.slice(0, 4);
+          let html = '';
+          recentOrders.forEach((tx, idx) => {
+            const isCash = tx.paymentMethod === 'Cash';
+            const rawItems = tx.itemsDetail || tx.items_detail || tx.itemsSummary || tx.items || '';
+            const itemsText = (typeof rawItems === 'string' && rawItems.trim().length > 0)
+              ? rawItems.trim()
+              : (tx.itemsCount ? `${tx.itemsCount}x Laphing Items` : 'Laphing Order');
+
+            const itemsList = itemsText.includes('+')
+              ? itemsText.split('+').map(s => s.trim()).filter(Boolean)
+              : itemsText.split(',').map(s => s.trim()).filter(Boolean);
+
+            html += `
+              <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-3 shadow-md hover:border-slate-600 transition">
+                <!-- Header row: Token, Time, Payment Method & Amount -->
+                <div class="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-amber-400 font-mono text-sm font-black">#${String(tx.token).padStart(2, '0')}</span>
+                    <span class="text-slate-400 text-xs font-semibold">· ${tx.time}</span>
+                    ${idx === 0 ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded-full font-bold uppercase">Latest</span>' : ''}
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-md ${isCash ? 'bg-emerald-950 text-emerald-300 border border-emerald-700/40' : 'bg-blue-950 text-blue-300 border border-blue-700/40'}">
+                      ${tx.paymentMethod}
+                    </span>
+                    <span class="font-black text-white text-base font-mono">₹${tx.totalAmount}</span>
+                  </div>
+                </div>
+
+                <!-- Highly Visible, Un-truncated Item Badges -->
+                <div class="flex flex-wrap gap-1.5 mt-2.5">
+                  ${itemsList.map(item => `
+                    <span class="inline-flex items-center gap-1.5 bg-slate-900 border border-slate-700/90 px-2.5 py-1 rounded-xl text-xs font-black text-amber-200 shadow-inner">
+                      <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                      <span>${item}</span>
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        }
+
+        function getStoredTransactions() {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY_ORDERS);
+            return raw ? JSON.parse(raw) : [];
+          } catch(e) {
+            return [];
+          }
+        }
+
+        function saveTransaction(tx) {
+          const list = getStoredTransactions();
+          list.unshift(tx); // Latest first
+          try {
+            localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(list));
+          } catch(e) {
+            console.error('Failed to save to localStorage', e);
+          }
+        }
+
+        function updateHeaderCount() {
+          const list = getStoredTransactions();
+          const today = new Date().toISOString().split('T')[0];
+          const todayTx = list.filter(t => t.date === today);
+          document.getElementById('headerOrdersCount').textContent = todayTx.length;
+        }
+
+        // --- 7. SALES LOG MODAL & METRICS ---
+        window.openSalesLogModal = function() {
+          renderSalesLog();
+          document.getElementById('salesLogModal').classList.remove('hidden');
+          document.getElementById('salesLogModal').classList.add('flex');
+        };
+
+        window.closeSalesLogModal = function() {
+          document.getElementById('salesLogModal').classList.add('hidden');
+          document.getElementById('salesLogModal').classList.remove('flex');
+        };
+
+        function renderSalesLog() {
+          const allTx = getStoredTransactions();
+          const today = new Date().toISOString().split('T')[0];
+          const todayTx = allTx.filter(t => t.date === today);
+
+          let revenue = 0;
+          let orders = todayTx.length;
+          let totalItems = 0;
+          let cashTotal = 0;
+          let upiTotal = 0;
+
+          todayTx.forEach(t => {
+            revenue += t.totalAmount;
+            totalItems += (t.itemsCount || 1);
+            if (t.paymentMethod === 'Cash') {
+              cashTotal += t.totalAmount;
+            } else {
+              upiTotal += t.totalAmount;
+            }
+          });
+
+          const avg = orders > 0 ? Math.round(revenue / orders) : 0;
+
+          document.getElementById('sumRevenue').textContent = `₹${revenue}`;
+          document.getElementById('sumAvgTicket').textContent = `Avg ₹${avg} / order`;
+          document.getElementById('sumTotalOrders').textContent = orders;
+          document.getElementById('sumTotalItems').textContent = `${totalItems} items sold`;
+          document.getElementById('sumCashTotal').textContent = `₹${cashTotal}`;
+          document.getElementById('sumUPITotal').textContent = `₹${upiTotal}`;
+          document.getElementById('txCountBadge').textContent = `${orders} orders today`;
+          document.getElementById('salesDateSubtitle').textContent = `Date: ${today} · WOW LAPHING Register`;
+
+          // Transaction list in Sales Log Drawer
+          const container = document.getElementById('txListContainer');
+          if (todayTx.length === 0) {
+            container.innerHTML = `
+              <div class="py-8 text-center text-slate-500 text-xs">
+                No orders recorded yet today.<br>Complete an order on the POS to see logs!
+              </div>
+            `;
+            return;
+          }
+
+          let html = '';
+          todayTx.forEach(tx => {
+            const isCash = tx.paymentMethod === 'Cash';
+            const rawItems = tx.itemsDetail || tx.items_detail || tx.itemsSummary || tx.items || '';
+            const itemsText = (typeof rawItems === 'string' && rawItems.trim().length > 0)
+              ? rawItems.trim()
+              : (tx.itemsCount ? `${tx.itemsCount}x Laphing Items` : 'Laphing Order');
+
+            const itemsList = itemsText.includes('+')
+              ? itemsText.split('+').map(s => s.trim()).filter(Boolean)
+              : itemsText.split(',').map(s => s.trim()).filter(Boolean);
+
+            html += `
+              <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-3 text-xs shadow-sm">
+                <div class="flex items-center justify-between gap-2 border-b border-slate-700/50 pb-2 mb-2">
+                  <div class="flex items-center gap-1.5 font-bold text-slate-200">
+                    <span class="text-amber-400 font-mono text-sm font-black">#${String(tx.token).padStart(2, '0')}</span>
+                    <span class="text-slate-400 font-normal">· ${tx.time}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded ${isCash ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/40' : 'bg-blue-950 text-blue-400 border border-blue-800/40'}">
+                      ${tx.paymentMethod}
+                    </span>
+                    <span class="font-black text-white text-sm font-mono">₹${tx.totalAmount}</span>
+                  </div>
+                </div>
+
+                <!-- Un-truncated items list -->
+                <div class="flex flex-wrap gap-1.5">
+                  ${itemsList.map(item => `
+                    <span class="inline-flex items-center gap-1 bg-slate-900 border border-slate-700/80 px-2 py-0.5 rounded-lg text-xs font-bold text-amber-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                      <span>${item}</span>
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        }
+
+        // --- 8. INSTANT ONE-TAP CSV EXPORT ---
+        window.downloadSalesCSV = function() {
+          const allTx = getStoredTransactions();
+          const today = new Date().toISOString().split('T')[0];
+          const todayTx = allTx.filter(t => t.date === today);
+
+          if (todayTx.length === 0) {
+            showToast('No orders to export today');
+            return;
+          }
+
+          // Exact format specified: Timestamp, Order_ID, Items_Detail, Payment_Method, Total_Amount
+          const headers = ['Timestamp', 'Order_ID', 'Items_Detail', 'Payment_Method', 'Total_Amount'];
+
+          const rows = todayTx.map(tx => {
+            const escapedDetails = `"${(tx.itemsDetail || '').replace(/"/g, '""')}"`;
+            return [
+              `"${tx.timestamp}"`,
+              `"${tx.id}"`,
+              escapedDetails,
+              `"${tx.paymentMethod}"`,
+              tx.totalAmount
+            ].join(',');
+          });
+
+          const csvContent = [headers.join(','), ...rows].join('\r\n');
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', `wow-laphing-sales-${today}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
+          playSound('add');
+          showToast(`Exported ${todayTx.length} orders as CSV!`);
+        };
+
+        // --- 9. IN-APP RESET DAY CONFIRMATION (NO BROWSER POPUPS) ---
+        window.openResetConfirmModal = function() {
+          const modal = document.getElementById('resetConfirmModal');
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            playSound('minus');
+          }
+        };
+
+        window.closeResetConfirmModal = function() {
+          const modal = document.getElementById('resetConfirmModal');
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+        };
+
+        window.confirmResetDayData = function() {
+          window.openResetConfirmModal();
+        };
+
+        window.executeResetDayData = function() {
+          try {
+            // Permanently clear stored orders
+            localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify([]));
+            orderToken = 1;
+            localStorage.setItem(STORAGE_KEY_TOKEN, '1');
+            localStorage.setItem(STORAGE_KEY_SEEDED, 'true'); // Prevents any future auto-reseeding
+          } catch(e) {
+            console.error('Storage clear error', e);
+          }
+
+          // Reset active ticket on main POS counter as well
+          activeTicket = {
+            item_ww_dry: 0,
+            item_ww_soup: 0,
+            item_chk_dry: 0,
+            item_chk_soup: 0,
+            item_orig: 0
+          };
+
+          playSound('complete');
+          window.closeResetConfirmModal();
+          renderSalesLog();
+          renderTicketUI();
+          updateHeaderCount();
+          renderRecentOrdersFeed();
+          showToast("Today's register reset to ₹0 (#01)");
+        };
+
+        // Seed sample orders ONCE on first-ever install only; NEVER re-seed after a user resets!
+        function seedInitialSampleIfEmpty() {
+          try {
+            const hasBeenSeeded = localStorage.getItem(STORAGE_KEY_SEEDED);
+            if (hasBeenSeeded) {
+              return; // Already initialized in past session or already cleared!
+            }
+            localStorage.setItem(STORAGE_KEY_SEEDED, 'true');
+
+            const list = getStoredTransactions();
+            if (list.length === 0) {
+              const today = new Date();
+              const dateStr = today.toISOString().split('T')[0];
+
+              const sample1 = {
+                id: 'ORD-1729012300001',
+                token: 1,
+                timestamp: new Date(today.getTime() - 1000 * 60 * 45).toISOString(),
+                date: dateStr,
+                time: '12:15:30 PM',
+                itemsCount: 2,
+                itemsDetail: '1x WaiWai Laphing (Dry) + 1x Original Laphing',
+                paymentMethod: 'Cash',
+                totalAmount: 160
+              };
+
+              const sample2 = {
+                id: 'ORD-1729012300002',
+                token: 2,
+                timestamp: new Date(today.getTime() - 1000 * 60 * 20).toISOString(),
+                date: dateStr,
+                time: '12:40:12 PM',
+                itemsCount: 1,
+                itemsDetail: '1x Chicken Laphing (Soup)',
+                paymentMethod: 'UPI',
+                totalAmount: 90
+              };
+
+              localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify([sample2, sample1]));
+              orderToken = 3;
+              localStorage.setItem(STORAGE_KEY_TOKEN, '3');
+            }
+          } catch(e) {}
+        }
+
+        // --- 10. CLOCK & EVENT HOOKS ---
+        function startLiveClock() {
+          const clockEl = document.getElementById('liveClock');
+          function update() {
+            const now = new Date();
+            clockEl.textContent = now.toLocaleTimeString([], { hour12: true });
+          }
+          update();
+          setInterval(update, 1000);
+        }
+
+        // Button hooks
+        document.getElementById('btnOpenSalesLog').addEventListener('click', openSalesLogModal);
+        document.getElementById('btnQuickExportCSV').addEventListener('click', downloadSalesCSV);
+
+        // Backdrop click to close modals
+        document.getElementById('salesLogModal').addEventListener('click', (e) => {
+          if (e.target.id === 'salesLogModal') {
+            closeSalesLogModal();
+          }
+        });
+
+        document.getElementById('resetConfirmModal').addEventListener('click', (e) => {
+          if (e.target.id === 'resetConfirmModal') {
+            closeResetConfirmModal();
+          }
+        });
+
+        // Initialize
+        seedInitialSampleIfEmpty();
+        renderTicketUI();
+        updateHeaderCount();
+        renderRecentOrdersFeed();
+        startLiveClock();
+      })();
+    </script>
+  </body>
+</html>
