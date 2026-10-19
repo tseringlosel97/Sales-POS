@@ -86,6 +86,38 @@
 
     <!-- Scrollable POS Menu Container (flex-1 overflow-y-auto) -->
     <main class="flex-1 max-w-md w-full mx-auto p-3 overflow-y-auto overscroll-contain space-y-3 pb-8">
+      <!-- Sticky Inventory Sheet Live Tracker Badge -->
+      <div class="sticky top-0 z-10 -mx-3 -mt-3 mb-2 px-3 py-2 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-sm flex items-center justify-between gap-1.5 flex-wrap">
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 bg-slate-950/80 border border-slate-700/80 px-2.5 py-1 rounded-xl">
+            <span class="text-sm">📄</span>
+            <span class="text-[11px] font-bold text-slate-300">Remaining:</span>
+            <span id="trackerRemainingSheets" class="text-sm font-black text-emerald-400 font-mono">80</span>
+          </div>
+          <!-- Side-by-side Sold and Wasted counts -->
+          <div class="flex items-center gap-1 font-mono text-[10px] font-bold">
+            <span class="px-1.5 py-0.5 rounded-lg bg-emerald-950/70 text-emerald-300 border border-emerald-800/40" title="Total Laphing Sold Today">
+              Sold: <span id="trackerSoldSheets" class="text-white">0</span>
+            </span>
+            <span class="px-1.5 py-0.5 rounded-lg bg-red-950/70 text-red-300 border border-red-800/40" title="Total Sheets Wasted Today">
+              Waste: <span id="trackerWastedSheets" class="text-white">0</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <!-- Quick -1 Waste Pill Button -->
+          <button onclick="quickLogWasteOne()" type="button" title="Quick log 1 torn sheet" class="h-6 px-2 rounded-lg bg-red-950/90 hover:bg-red-900 text-red-300 border border-red-800/60 text-[10px] font-extrabold flex items-center gap-1 transition active:scale-90">
+            <span>⚠️</span>
+            <span>-1 Waste</span>
+          </button>
+          <!-- Log Wastage with reason modal trigger -->
+          <button onclick="openWastageModal()" type="button" title="Log sheet wastage details" class="h-6 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold border border-slate-700 transition active:scale-95">
+            Log
+          </button>
+        </div>
+      </div>
+
       <!-- Section Label & Token ID -->
       <div class="flex items-center justify-between px-1 text-xs font-bold text-slate-400">
         <span>MENU ITEMS (TAP TO ADD)</span>
@@ -298,20 +330,80 @@
     <!-- Sales Log & CSV Export Modal / Tab Overlay -->
     <div id="salesLogModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex-col justify-end transition-opacity">
       <div class="bg-slate-900 border-t border-slate-700 rounded-t-3xl max-w-md w-full mx-auto max-h-[88vh] flex flex-col pb-safe shadow-2xl animate-in slide-in-from-bottom duration-200">
-        <!-- Drawer Header -->
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <!-- Drawer Header with Set Initial Stock Action -->
+        <div class="p-3.5 border-b border-slate-800 flex items-center justify-between gap-2">
           <div>
             <h2 class="text-base font-black text-white">Daily Sales Log</h2>
-            <p id="salesDateSubtitle" class="text-xs text-slate-400">WOW LAPHING POS Register</p>
+            <p id="salesDateSubtitle" class="text-[11px] text-slate-400">WOW LAPHING POS Register</p>
           </div>
-          <button onclick="closeSalesLogModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white text-lg flex items-center justify-center active:scale-95">
-            &times;
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button onclick="openInitialStockModal()" type="button" class="px-2.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 text-amber-300 border border-amber-500/40 text-xs font-bold transition flex items-center gap-1">
+              <span>📝</span>
+              <span>Set Initial Stock</span>
+            </button>
+            <button onclick="closeSalesLogModal()" class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 hover:text-white text-lg flex items-center justify-center active:scale-95">
+              &times;
+            </button>
+          </div>
         </div>
 
         <!-- Drawer Content -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
-          <!-- Daily Summary Bar (Clean Metric Cards) -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-3.5">
+          <!-- Sheet Inventory & Wastage Live Summary Card -->
+          <div class="bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-inner">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5">
+                <span class="text-base">📄</span>
+                <div>
+                  <h3 class="text-xs font-black text-white uppercase tracking-wider">Sheet Inventory Tracking</h3>
+                  <p class="text-[10px] text-slate-400">Remaining = Initial - Sold - Wasted</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openWastageModal()" type="button" class="px-2.5 py-1 rounded-xl bg-red-950/90 hover:bg-red-900 active:scale-95 text-red-300 border border-red-800/70 text-xs font-bold transition flex items-center gap-1">
+                  <span>⚠️</span>
+                  <span>Log Wastage</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4-Stat Side-by-Side Metric Columns -->
+            <div class="grid grid-cols-4 gap-1.5 text-center">
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2">
+                <span class="text-[9px] font-bold text-slate-400 block uppercase">Initial</span>
+                <span id="logSumInitialSheets" class="text-base font-black text-white font-mono">80</span>
+                <span class="text-[8px] text-slate-500 block">sheets</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2">
+                <span class="text-[9px] font-bold text-emerald-400 block uppercase">Sold</span>
+                <span id="logSumSoldSheets" class="text-base font-black text-emerald-400 font-mono">0</span>
+                <span class="text-[8px] text-emerald-500/70 block">rolls</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2">
+                <span class="text-[9px] font-bold text-red-400 block uppercase">Wasted</span>
+                <span id="logSumWastedSheets" class="text-base font-black text-red-400 font-mono">0</span>
+                <span class="text-[8px] text-red-500/70 block">torn/lost</span>
+              </div>
+              <div class="bg-slate-900 border border-slate-800 rounded-xl p-2 bg-gradient-to-b from-slate-900 to-emerald-950/30">
+                <span class="text-[9px] font-bold text-emerald-300 block uppercase">Remaining</span>
+                <span id="logSumRemainingSheets" class="text-base font-black text-emerald-300 font-mono">80</span>
+                <span class="text-[8px] text-emerald-500/70 block">available</span>
+              </div>
+            </div>
+
+            <!-- Today's Wastage Log List Accordion -->
+            <div>
+              <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 mb-1.5">
+                <span>Today's Wastage Log</span>
+                <span id="logWastageCountBadge" class="text-[10px] font-mono text-slate-500">0 logs</span>
+              </div>
+              <div id="logWastageListContainer" class="space-y-1.5 max-h-32 overflow-y-auto">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily Revenue & Orders Summary Bar -->
           <div class="grid grid-cols-2 gap-2">
             <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3">
               <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Today's Revenue</span>
@@ -390,6 +482,105 @@
       </div>
     </div>
 
+    <!-- Set Initial Stock Modal (In-App, No browser alerts/prompts) -->
+    <div id="initialStockModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[75] hidden items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-950 border border-amber-800/60 text-amber-300 flex items-center justify-center text-xl flex-none">
+            📝
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white leading-tight">Starting Sheet Batch</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Set today's starting sheet inventory</p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-xs font-bold text-slate-300">Quick Batch Presets:</label>
+          <div class="grid grid-cols-5 gap-1.5">
+            <button type="button" onclick="selectInitialStockPreset(50)" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-mono font-bold text-slate-200 border border-slate-700 transition">50</button>
+            <button type="button" onclick="selectInitialStockPreset(80)" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-mono font-bold text-slate-200 border border-slate-700 transition">80</button>
+            <button type="button" onclick="selectInitialStockPreset(100)" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-mono font-bold text-slate-200 border border-slate-700 transition">100</button>
+            <button type="button" onclick="selectInitialStockPreset(120)" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-mono font-bold text-slate-200 border border-slate-700 transition">120</button>
+            <button type="button" onclick="selectInitialStockPreset(150)" class="py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-mono font-bold text-slate-200 border border-slate-700 transition">150</button>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="inputInitialStock" class="block text-xs font-bold text-slate-300">Or Custom Sheet Count:</label>
+          <div class="relative">
+            <input type="number" id="inputInitialStock" min="1" max="1000" value="80" class="w-full h-12 bg-slate-950 border border-slate-700 rounded-xl px-4 font-mono text-xl font-bold text-white text-center focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400" />
+            <span class="absolute right-4 top-3.5 text-xs text-slate-500 font-bold">sheets</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button onclick="closeInitialStockModal()" type="button" class="flex-1 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-xs border border-slate-700 transition">
+            Cancel
+          </button>
+          <button onclick="saveInitialStockFromModal()" type="button" class="flex-1 h-11 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs shadow-lg shadow-amber-950/50 transition flex items-center justify-center gap-1.5">
+            <span>💾 Save Stock</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log Sheet Wastage Modal -->
+    <div id="wastageModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[75] hidden items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-red-950 border border-red-800/60 text-red-400 flex items-center justify-center text-xl flex-none">
+            ⚠️
+          </div>
+          <div>
+            <h3 class="text-base font-black text-white leading-tight">Log Sheet Wastage</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Record torn, damaged or spoiled sheets</p>
+          </div>
+        </div>
+
+        <!-- Quantity buttons -->
+        <div class="space-y-2">
+          <label class="block text-xs font-bold text-slate-300">Wasted Sheets Count:</label>
+          <div class="grid grid-cols-4 gap-2">
+            <button type="button" onclick="setWastageQty(1)" id="wasteQtyBtn_1" class="waste-qty-btn py-2 rounded-xl bg-red-950 text-red-300 border border-red-600 font-mono font-black text-sm active:scale-95 transition">-1</button>
+            <button type="button" onclick="setWastageQty(2)" id="wasteQtyBtn_2" class="waste-qty-btn py-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 font-mono font-bold text-sm active:scale-95 transition">-2</button>
+            <button type="button" onclick="setWastageQty(3)" id="wasteQtyBtn_3" class="waste-qty-btn py-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 font-mono font-bold text-sm active:scale-95 transition">-3</button>
+            <button type="button" onclick="setWastageQty(5)" id="wasteQtyBtn_5" class="waste-qty-btn py-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 font-mono font-bold text-sm active:scale-95 transition">-5</button>
+          </div>
+          <input type="hidden" id="inputWastageQty" value="1" />
+        </div>
+
+        <!-- Reason selection -->
+        <div class="space-y-2">
+          <label class="block text-xs font-bold text-slate-300">Wastage Reason:</label>
+          <div class="grid grid-cols-2 gap-1.5" id="wastageReasonChips">
+            <button type="button" onclick="selectWastageReason('Torn / Roll Error')" class="waste-reason-chip py-2 px-2.5 rounded-xl text-xs font-bold text-left bg-red-950 text-red-200 border border-red-600 transition active:scale-95">
+              ✂️ Torn / Rolled
+            </button>
+            <button type="button" onclick="selectWastageReason('Quality Check')" class="waste-reason-chip py-2 px-2.5 rounded-xl text-xs font-bold text-left bg-slate-800 text-slate-300 border border-slate-700 transition active:scale-95">
+              🔍 Quality Check
+            </button>
+            <button type="button" onclick="selectWastageReason('Dropped / Dirty')" class="waste-reason-chip py-2 px-2.5 rounded-xl text-xs font-bold text-left bg-slate-800 text-slate-300 border border-slate-700 transition active:scale-95">
+              🍂 Dropped / Dirty
+            </button>
+            <button type="button" onclick="selectWastageReason('Prep Spoilage')" class="waste-reason-chip py-2 px-2.5 rounded-xl text-xs font-bold text-left bg-slate-800 text-slate-300 border border-slate-700 transition active:scale-95">
+              🥣 Prep Spoilage
+            </button>
+          </div>
+          <input type="hidden" id="inputWastageReason" value="Torn / Roll Error" />
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button onclick="closeWastageModal()" type="button" class="flex-1 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-300 font-bold text-xs border border-slate-700 transition">
+            Cancel
+          </button>
+          <button onclick="saveWastageFromModal()" type="button" class="flex-1 h-11 rounded-xl bg-red-600 hover:bg-red-500 active:scale-95 text-white font-black text-xs shadow-lg shadow-red-950/50 transition flex items-center justify-center gap-1.5">
+            <span>⚠️ Record Waste</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Quick Toast Notification -->
     <div id="quickToast" class="fixed top-4 left-1/2 -translate-x-1/2 -translate-y-20 bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-xl transition-transform duration-200 pointer-events-none z-[80] flex items-center gap-1.5">
       <span id="toastText">Order Completed!</span>
@@ -408,9 +599,250 @@
           item_chk_soup:{ id: 'item_chk_soup',name: 'Chicken Laphing (Soup)',price: 90, category: 'nonveg' }
         };
 
-        const STORAGE_KEY_ORDERS = 'wow_laph_orders_v2';
-        const STORAGE_KEY_TOKEN  = 'wow_laph_token_v2';
-        const STORAGE_KEY_SEEDED = 'wow_laph_seeded_v2';
+        const STORAGE_KEY_ORDERS        = 'wow_laph_orders_v2';
+        const STORAGE_KEY_TOKEN         = 'wow_laph_token_v2';
+        const STORAGE_KEY_SEEDED        = 'wow_laph_seeded_v2';
+        const STORAGE_KEY_INITIAL_STOCK = 'wow_laph_initial_stock_v2';
+        const STORAGE_KEY_WASTAGE       = 'wow_laph_wastage_v2';
+
+        // --- INVENTORY SHEET TRACKING & WASTAGE LOGGING CORE ---
+        function getInitialStock() {
+          try {
+            const val = localStorage.getItem(STORAGE_KEY_INITIAL_STOCK);
+            if (val !== null && !isNaN(parseInt(val, 10))) {
+              return parseInt(val, 10);
+            }
+          } catch(e) {}
+          return 80; // default 80 sheets starting batch
+        }
+
+        function setInitialStock(count) {
+          try {
+            localStorage.setItem(STORAGE_KEY_INITIAL_STOCK, String(count));
+          } catch(e) {}
+          updateInventoryUI();
+          playSound('add');
+          showToast(`Starting sheets set to ${count}`);
+        }
+
+        function getStoredWastage() {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY_WASTAGE);
+            return raw ? JSON.parse(raw) : [];
+          } catch(e) {
+            return [];
+          }
+        }
+
+        function saveWastageRecord(count, reason) {
+          const list = getStoredWastage();
+          const now = new Date();
+          const num = Math.max(1, parseInt(count, 10) || 1);
+          const record = {
+            id: `WST-${Date.now()}`,
+            timestamp: now.toISOString(),
+            date: now.toISOString().split('T')[0],
+            time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            count: num,
+            reason: reason || 'Torn / Roll Error'
+          };
+          list.unshift(record);
+          try {
+            localStorage.setItem(STORAGE_KEY_WASTAGE, JSON.stringify(list));
+          } catch(e) {
+            console.error('Failed to save wastage', e);
+          }
+          playSound('minus');
+          showToast(`Logged -${record.count} Waste (${record.reason})`);
+          updateInventoryUI();
+        }
+
+        // Formula: Remaining Sheets = Initial Sheets - Total Sold - Total Wasted
+        function calculateSheetStats() {
+          const initial = getInitialStock();
+          const today = new Date().toISOString().split('T')[0];
+
+          // Total Sold = total laphing items sold today across all completed orders
+          const allOrders = getStoredTransactions();
+          const todayOrders = allOrders.filter(t => t.date === today);
+          let totalSold = 0;
+          todayOrders.forEach(t => {
+            totalSold += (t.itemsCount || 1);
+          });
+
+          // Total Wasted = sum of wasted sheets logged today
+          const allWastage = getStoredWastage();
+          const todayWastage = allWastage.filter(w => w.date === today);
+          let totalWasted = 0;
+          todayWastage.forEach(w => {
+            totalWasted += (w.count || 0);
+          });
+
+          const remaining = initial - totalSold - totalWasted;
+          return {
+            initial,
+            sold: totalSold,
+            wasted: totalWasted,
+            remaining,
+            todayWastage
+          };
+        }
+
+        function updateInventoryUI() {
+          const stats = calculateSheetStats();
+
+          // Sticky Top Header Badge
+          const trackerRemaining = document.getElementById('trackerRemainingSheets');
+          const trackerSold = document.getElementById('trackerSoldSheets');
+          const trackerWasted = document.getElementById('trackerWastedSheets');
+
+          if (trackerRemaining) {
+            trackerRemaining.textContent = stats.remaining;
+            // Visual alert if low stock
+            if (stats.remaining <= 0) {
+              trackerRemaining.className = 'text-sm font-black text-red-500 font-mono animate-pulse';
+            } else if (stats.remaining <= 10) {
+              trackerRemaining.className = 'text-sm font-black text-amber-400 font-mono';
+            } else {
+              trackerRemaining.className = 'text-sm font-black text-emerald-400 font-mono';
+            }
+          }
+          if (trackerSold) trackerSold.textContent = stats.sold;
+          if (trackerWasted) trackerWasted.textContent = stats.wasted;
+
+          // Sales Log Modal Summary
+          const logInitial = document.getElementById('logSumInitialSheets');
+          const logSold = document.getElementById('logSumSoldSheets');
+          const logWasted = document.getElementById('logSumWastedSheets');
+          const logRemaining = document.getElementById('logSumRemainingSheets');
+          const logWastageCount = document.getElementById('logWastageCountBadge');
+          const logWastageContainer = document.getElementById('logWastageListContainer');
+
+          if (logInitial) logInitial.textContent = stats.initial;
+          if (logSold) logSold.textContent = stats.sold;
+          if (logWasted) logWasted.textContent = stats.wasted;
+          if (logRemaining) {
+            logRemaining.textContent = stats.remaining;
+            if (stats.remaining <= 0) {
+              logRemaining.className = 'text-base font-black text-red-400 font-mono';
+            } else if (stats.remaining <= 10) {
+              logRemaining.className = 'text-base font-black text-amber-300 font-mono';
+            } else {
+              logRemaining.className = 'text-base font-black text-emerald-300 font-mono';
+            }
+          }
+          if (logWastageCount) logWastageCount.textContent = `${stats.todayWastage.length} logs (${stats.wasted} sheets)`;
+
+          if (logWastageContainer) {
+            if (stats.todayWastage.length === 0) {
+              logWastageContainer.innerHTML = `
+                <div class="py-2.5 text-center text-slate-500 text-[10px]">
+                  No sheet wastage logged today. Clean operations!
+                </div>
+              `;
+            } else {
+              logWastageContainer.innerHTML = stats.todayWastage.map(w => `
+                <div class="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px]">
+                  <div class="flex items-center gap-1.5 font-bold">
+                    <span class="text-red-400 font-mono font-black">-${w.count} ${w.count === 1 ? 'Sheet' : 'Sheets'}</span>
+                    <span class="text-slate-300">· ${w.reason}</span>
+                  </div>
+                  <span class="text-slate-500 text-[10px] font-mono">${w.time}</span>
+                </div>
+              `).join('');
+            }
+          }
+        }
+
+        // Window exposed actions for modals
+        window.openInitialStockModal = function() {
+          const input = document.getElementById('inputInitialStock');
+          if (input) input.value = getInitialStock();
+          const modal = document.getElementById('initialStockModal');
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+          }
+        };
+
+        window.closeInitialStockModal = function() {
+          const modal = document.getElementById('initialStockModal');
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+        };
+
+        window.selectInitialStockPreset = function(qty) {
+          const input = document.getElementById('inputInitialStock');
+          if (input) input.value = qty;
+        };
+
+        window.saveInitialStockFromModal = function() {
+          const input = document.getElementById('inputInitialStock');
+          const val = parseInt(input ? input.value : 80, 10);
+          if (isNaN(val) || val < 1) {
+            showToast('Please enter a valid sheet count (min 1)');
+            return;
+          }
+          setInitialStock(val);
+          closeInitialStockModal();
+        };
+
+        window.openWastageModal = function() {
+          setWastageQty(1);
+          selectWastageReason('Torn / Roll Error');
+          const modal = document.getElementById('wastageModal');
+          if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+          }
+        };
+
+        window.closeWastageModal = function() {
+          const modal = document.getElementById('wastageModal');
+          if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+          }
+        };
+
+        window.setWastageQty = function(qty) {
+          const hiddenInput = document.getElementById('inputWastageQty');
+          if (hiddenInput) hiddenInput.value = qty;
+          document.querySelectorAll('.waste-qty-btn').forEach(btn => {
+            btn.className = 'waste-qty-btn py-2 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 font-mono font-bold text-sm active:scale-95 transition';
+          });
+          const activeBtn = document.getElementById(`wasteQtyBtn_${qty}`);
+          if (activeBtn) {
+            activeBtn.className = 'waste-qty-btn py-2 rounded-xl bg-red-950 text-red-300 border border-red-600 ring-1 ring-red-500 font-mono font-black text-sm active:scale-95 transition';
+          }
+        };
+
+        window.selectWastageReason = function(reason) {
+          const hiddenInput = document.getElementById('inputWastageReason');
+          if (hiddenInput) hiddenInput.value = reason;
+          document.querySelectorAll('.waste-reason-chip').forEach(chip => {
+            if (chip.textContent.includes(reason.split('/')[0].trim())) {
+              chip.className = 'waste-reason-chip py-2 px-2.5 rounded-xl text-xs font-bold text-left bg-red-950 text-red-200 border border-red-600 ring-1 ring-red-500 transition active:scale-95';
+            } else {
+              chip.className = 'waste-reason-chip py-2 px-2.5 rounded-xl text-xs font-bold text-left bg-slate-800 text-slate-300 border border-slate-700 transition active:scale-95';
+            }
+          });
+        };
+
+        window.saveWastageFromModal = function() {
+          const qtyInput = document.getElementById('inputWastageQty');
+          const reasonInput = document.getElementById('inputWastageReason');
+          const qty = parseInt(qtyInput ? qtyInput.value : 1, 10) || 1;
+          const reason = reasonInput ? reasonInput.value : 'Torn / Roll Error';
+          saveWastageRecord(qty, reason);
+          closeWastageModal();
+        };
+
+        window.quickLogWasteOne = function() {
+          saveWastageRecord(1, 'Torn / Roll Error');
+        };
 
         // Active Ticket State
         let activeTicket = {
@@ -673,6 +1105,7 @@
           renderTicketUI();
           updateHeaderCount();
           renderRecentOrdersFeed();
+          updateInventoryUI();
         };
 
         // Robust helper to extract and display ordered items
@@ -870,6 +1303,7 @@
             `;
           });
           container.innerHTML = html;
+          updateInventoryUI();
         }
 
         // --- 8. INSTANT ONE-TAP CSV EXPORT ---
@@ -896,6 +1330,24 @@
               tx.totalAmount
             ].join(',');
           });
+
+          // Append Daily Inventory Audit & Wastage to CSV
+          const sheetStats = calculateSheetStats();
+          rows.push('');
+          rows.push('# --- DAILY SHEET INVENTORY AUDIT ---');
+          rows.push(`Initial Starting Sheets,${sheetStats.initial}`);
+          rows.push(`Total Laphing Sold Today,${sheetStats.sold}`);
+          rows.push(`Total Sheets Wasted Today,${sheetStats.wasted}`);
+          rows.push(`Remaining Available Sheets,${sheetStats.remaining}`);
+
+          if (sheetStats.todayWastage && sheetStats.todayWastage.length > 0) {
+            rows.push('');
+            rows.push('# --- WASTAGE LOG ENTRIES ---');
+            rows.push('Timestamp,Wastage_ID,Sheets_Wasted,Reason');
+            sheetStats.todayWastage.forEach(w => {
+              rows.push(`"${w.timestamp}","${w.id}",${w.count},"${(w.reason || '').replace(/"/g, '""')}"`);
+            });
+          }
 
           const csvContent = [headers.join(','), ...rows].join('\r\n');
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -936,8 +1388,9 @@
 
         window.executeResetDayData = function() {
           try {
-            // Permanently clear stored orders
+            // Permanently clear stored orders and today's wastage
             localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify([]));
+            localStorage.setItem(STORAGE_KEY_WASTAGE, JSON.stringify([]));
             orderToken = 1;
             localStorage.setItem(STORAGE_KEY_TOKEN, '1');
             localStorage.setItem(STORAGE_KEY_SEEDED, 'true'); // Prevents any future auto-reseeding
@@ -961,7 +1414,8 @@
           renderTicketUI();
           updateHeaderCount();
           renderRecentOrdersFeed();
-          showToast("Today's register reset to ₹0 (#01)");
+          updateInventoryUI();
+          showToast("Today's register & inventory reset to ₹0 (#01)");
         };
 
         // Seed sample orders ONCE on first-ever install only; NEVER re-seed after a user resets!
@@ -1037,11 +1491,24 @@
           }
         });
 
+        document.getElementById('initialStockModal').addEventListener('click', (e) => {
+          if (e.target.id === 'initialStockModal') {
+            closeInitialStockModal();
+          }
+        });
+
+        document.getElementById('wastageModal').addEventListener('click', (e) => {
+          if (e.target.id === 'wastageModal') {
+            closeWastageModal();
+          }
+        });
+
         // Initialize
         seedInitialSampleIfEmpty();
         renderTicketUI();
         updateHeaderCount();
         renderRecentOrdersFeed();
+        updateInventoryUI();
         startLiveClock();
       })();
     </script>
