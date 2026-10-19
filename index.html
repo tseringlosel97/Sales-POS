@@ -35,22 +35,29 @@
       * {
         -webkit-tap-highlight-color: transparent;
         user-select: none;
+        box-sizing: border-box;
       }
-      body {
-        overscroll-behavior-y: none;
+      html, body {
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+        overscroll-behavior: none;
         font-variant-numeric: tabular-nums;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       }
-      /* Custom safe-area padding for mobile edge-to-edge screens */
+      /* Custom safe-area padding for iPhone dynamic island, notch & home bar */
+      .pt-safe {
+        padding-top: max(0.75rem, env(safe-area-inset-top));
+      }
       .pb-safe {
         padding-bottom: max(1rem, env(safe-area-inset-bottom));
       }
     </style>
   </head>
-  <body class="h-full flex flex-col bg-slate-900 text-slate-100 overflow-hidden antialiased">
+  <body class="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-900 text-slate-100 antialiased select-none">
 
-    <!-- Top Minimal Sticky Header -->
-    <header class="flex-none bg-slate-950/80 backdrop-blur border-b border-slate-800/80 px-4 py-2.5 z-20">
+    <!-- Fixed Top Header (shrink-0, padded safely at top for iPhone notch / dynamic island) -->
+    <header class="shrink-0 flex-none bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-4 pt-safe pb-2.5 z-20">
       <div class="max-w-md mx-auto flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -74,33 +81,32 @@
       </div>
     </header>
 
-    <!-- Main POS Body (5 Hardcoded Items + Scroll Down for Recent Orders) -->
-    <main class="flex-1 max-w-md w-full mx-auto p-3 overflow-y-auto overscroll-y-contain space-y-3 pb-36">
+    <!-- Scrollable POS Menu Container (flex-1 overflow-y-auto) -->
+    <main class="flex-1 max-w-md w-full mx-auto p-3 overflow-y-auto overscroll-contain space-y-3 pb-8">
       <!-- Section Label & Token ID -->
       <div class="flex items-center justify-between px-1 text-xs font-bold text-slate-400">
         <span>MENU ITEMS (TAP TO ADD)</span>
         <span id="activeTicketToken" class="text-amber-400 font-mono">TICKET #01</span>
       </div>
 
-      <!-- 5 Giant Color-Coded Item Cards -->
-      <div class="space-y-2.5">
+      <!-- Categorized Giant Color-Coded Item Cards (Compact, No Subtitles) -->
+      <div class="space-y-2">
         
-        <!-- Item 1: WaiWai Laphing (Dry) - ₹70 [Warm Orange] -->
-        <div class="relative flex items-center bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-3.5 shadow-lg shadow-orange-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
-          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_ww_dry')">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-extrabold tracking-tight leading-tight">WaiWai Laphing (Dry)</h3>
-                <span id="qty_badge_item_ww_dry" class="hidden px-2 py-0.5 rounded-full bg-white text-orange-700 text-xs font-black shadow-sm">x0</span>
-              </div>
-              <p class="text-xs font-medium text-orange-100/90 mt-0.5">Rolled · Crispy WaiWai Crunch</p>
+        <!-- Category 1: WaiWai Special (Best Seller Veg) -> from-amber-500 to-orange-600 with ⭐ BESTSELLER tag -->
+        <!-- Item 1: WaiWai Laphing (Dry) - ₹70 -->
+        <div class="relative flex items-center bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-2.5 shadow-lg shadow-orange-950/40 text-white transition active:scale-[0.99] select-none min-h-[56px]">
+          <div class="flex-1 flex items-center justify-between pr-2.5 cursor-pointer" onclick="handleCardClick('item_ww_dry')">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-extrabold tracking-tight leading-tight">WaiWai Laphing (Dry)</h3>
+              <span class="px-1.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider border border-white/30 backdrop-blur-xs flex items-center gap-0.5">⭐ BESTSELLER</span>
+              <span id="qty_badge_item_ww_dry" class="hidden px-2 py-0.5 rounded-full bg-white text-orange-700 text-xs font-black shadow-sm">x0</span>
             </div>
-            <div class="text-right">
+            <div class="text-right flex-none pl-2">
               <span class="text-xl font-black tracking-tight">₹70</span>
             </div>
           </div>
           <!-- Dual Action Controls (+ / -) -->
-          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20 flex-none">
             <button id="minus_item_ww_dry" onclick="decrementItem('item_ww_dry')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease WaiWai Dry">
               &minus;
             </button>
@@ -110,47 +116,88 @@
           </div>
         </div>
 
-        <!-- Item 2: WaiWai Laphing (Soup) - ₹70 [Deep Amber] -->
-        <div class="relative flex items-center bg-gradient-to-r from-amber-600 to-amber-700 rounded-2xl p-3.5 shadow-lg shadow-amber-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
-          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_ww_soup')">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-extrabold tracking-tight leading-tight">WaiWai Laphing (Soup)</h3>
-                <span id="qty_badge_item_ww_soup" class="hidden px-2 py-0.5 rounded-full bg-white text-amber-800 text-xs font-black shadow-sm">x0</span>
-              </div>
-              <p class="text-xs font-medium text-amber-100/90 mt-0.5">Tangy Spicy Garlic Broth</p>
+        <!-- Item 2: WaiWai Laphing (Soup) - ₹70 -->
+        <div class="relative flex items-center bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-2.5 shadow-lg shadow-orange-950/40 text-white transition active:scale-[0.99] select-none min-h-[56px]">
+          <div class="flex-1 flex items-center justify-between pr-2.5 cursor-pointer" onclick="handleCardClick('item_ww_soup')">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-extrabold tracking-tight leading-tight">WaiWai Laphing (Soup)</h3>
+              <span class="px-1.5 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider border border-white/30 backdrop-blur-xs flex items-center gap-0.5">⭐ BESTSELLER</span>
+              <span id="qty_badge_item_ww_soup" class="hidden px-2 py-0.5 rounded-full bg-white text-orange-700 text-xs font-black shadow-sm">x0</span>
             </div>
-            <div class="text-right">
+            <div class="text-right flex-none pl-2">
               <span class="text-xl font-black tracking-tight">₹70</span>
             </div>
           </div>
           <!-- Dual Action Controls (+ / -) -->
-          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20 flex-none">
             <button id="minus_item_ww_soup" onclick="decrementItem('item_ww_soup')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease WaiWai Soup">
               &minus;
             </button>
-            <button onclick="incrementItem('item_ww_soup')" class="w-10 h-10 rounded-xl bg-white text-amber-700 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase WaiWai Soup">
+            <button onclick="incrementItem('item_ww_soup')" class="w-10 h-10 rounded-xl bg-white text-orange-600 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase WaiWai Soup">
               &plus;
             </button>
           </div>
         </div>
 
-        <!-- Item 3: Chicken Laphing (Dry) - ₹90 [Crimson / Red] -->
-        <div class="relative flex items-center bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-3.5 shadow-lg shadow-red-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
-          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_chk_dry')">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-extrabold tracking-tight leading-tight">Chicken Laphing (Dry)</h3>
-                <span id="qty_badge_item_chk_dry" class="hidden px-2 py-0.5 rounded-full bg-white text-red-700 text-xs font-black shadow-sm">x0</span>
-              </div>
-              <p class="text-xs font-medium text-red-100/90 mt-0.5">Spiced Chicken Shreds · Dry Roll</p>
+        <!-- Category 2: Standard Veg (Paneer, Original, etc.) -> from-emerald-600 to-green-700 -->
+        <!-- Item 3: Original Laphing - ₹90 -->
+        <div class="relative flex items-center bg-gradient-to-r from-emerald-600 to-green-700 rounded-2xl p-2.5 shadow-lg shadow-emerald-950/40 text-white transition active:scale-[0.99] select-none min-h-[56px]">
+          <div class="flex-1 flex items-center justify-between pr-2.5 cursor-pointer" onclick="handleCardClick('item_orig')">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-extrabold tracking-tight leading-tight">Original Laphing</h3>
+              <span id="qty_badge_item_orig" class="hidden px-2 py-0.5 rounded-full bg-white text-emerald-800 text-xs font-black shadow-sm">x0</span>
             </div>
-            <div class="text-right">
+            <div class="text-right flex-none pl-2">
               <span class="text-xl font-black tracking-tight">₹90</span>
             </div>
           </div>
           <!-- Dual Action Controls (+ / -) -->
-          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20 flex-none">
+            <button id="minus_item_orig" onclick="decrementItem('item_orig')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease Original Laphing">
+              &minus;
+            </button>
+            <button onclick="incrementItem('item_orig')" class="w-10 h-10 rounded-xl bg-white text-emerald-700 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase Original Laphing">
+              &plus;
+            </button>
+          </div>
+        </div>
+
+        <!-- Item 4: Paneer Laphing - ₹90 -->
+        <div class="relative flex items-center bg-gradient-to-r from-emerald-600 to-green-700 rounded-2xl p-2.5 shadow-lg shadow-emerald-950/40 text-white transition active:scale-[0.99] select-none min-h-[56px]">
+          <div class="flex-1 flex items-center justify-between pr-2.5 cursor-pointer" onclick="handleCardClick('item_paneer')">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-extrabold tracking-tight leading-tight">Paneer Laphing</h3>
+              <span id="qty_badge_item_paneer" class="hidden px-2 py-0.5 rounded-full bg-white text-emerald-800 text-xs font-black shadow-sm">x0</span>
+            </div>
+            <div class="text-right flex-none pl-2">
+              <span class="text-xl font-black tracking-tight">₹90</span>
+            </div>
+          </div>
+          <!-- Dual Action Controls (+ / -) -->
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20 flex-none">
+            <button id="minus_item_paneer" onclick="decrementItem('item_paneer')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease Paneer Laphing">
+              &minus;
+            </button>
+            <button onclick="incrementItem('item_paneer')" class="w-10 h-10 rounded-xl bg-white text-emerald-700 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase Paneer Laphing">
+              &plus;
+            </button>
+          </div>
+        </div>
+
+        <!-- Category 3: Non-Veg (Chicken, etc.) -> from-red-600 to-rose-700 -->
+        <!-- Item 5: Chicken Laphing (Dry) - ₹90 -->
+        <div class="relative flex items-center bg-gradient-to-r from-red-600 to-rose-700 rounded-2xl p-2.5 shadow-lg shadow-red-950/40 text-white transition active:scale-[0.99] select-none min-h-[56px]">
+          <div class="flex-1 flex items-center justify-between pr-2.5 cursor-pointer" onclick="handleCardClick('item_chk_dry')">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-extrabold tracking-tight leading-tight">Chicken Laphing (Dry)</h3>
+              <span id="qty_badge_item_chk_dry" class="hidden px-2 py-0.5 rounded-full bg-white text-red-700 text-xs font-black shadow-sm">x0</span>
+            </div>
+            <div class="text-right flex-none pl-2">
+              <span class="text-xl font-black tracking-tight">₹90</span>
+            </div>
+          </div>
+          <!-- Dual Action Controls (+ / -) -->
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20 flex-none">
             <button id="minus_item_chk_dry" onclick="decrementItem('item_chk_dry')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease Chicken Dry">
               &minus;
             </button>
@@ -160,51 +207,23 @@
           </div>
         </div>
 
-        <!-- Item 4: Chicken Laphing (Soup) - ₹90 [Dark Rose] -->
-        <div class="relative flex items-center bg-gradient-to-r from-rose-700 to-rose-800 rounded-2xl p-3.5 shadow-lg shadow-rose-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
-          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_chk_soup')">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-extrabold tracking-tight leading-tight">Chicken Laphing (Soup)</h3>
-                <span id="qty_badge_item_chk_soup" class="hidden px-2 py-0.5 rounded-full bg-white text-rose-800 text-xs font-black shadow-sm">x0</span>
-              </div>
-              <p class="text-xs font-medium text-rose-100/90 mt-0.5">Cold Sour Garlic Soup · Shredded</p>
+        <!-- Item 6: Chicken Laphing (Soup) - ₹90 -->
+        <div class="relative flex items-center bg-gradient-to-r from-red-600 to-rose-700 rounded-2xl p-2.5 shadow-lg shadow-rose-950/40 text-white transition active:scale-[0.99] select-none min-h-[56px]">
+          <div class="flex-1 flex items-center justify-between pr-2.5 cursor-pointer" onclick="handleCardClick('item_chk_soup')">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-base font-extrabold tracking-tight leading-tight">Chicken Laphing (Soup)</h3>
+              <span id="qty_badge_item_chk_soup" class="hidden px-2 py-0.5 rounded-full bg-white text-rose-800 text-xs font-black shadow-sm">x0</span>
             </div>
-            <div class="text-right">
+            <div class="text-right flex-none pl-2">
               <span class="text-xl font-black tracking-tight">₹90</span>
             </div>
           </div>
           <!-- Dual Action Controls (+ / -) -->
-          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
+          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20 flex-none">
             <button id="minus_item_chk_soup" onclick="decrementItem('item_chk_soup')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease Chicken Soup">
               &minus;
             </button>
-            <button onclick="incrementItem('item_chk_soup')" class="w-10 h-10 rounded-xl bg-white text-rose-800 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase Chicken Soup">
-              &plus;
-            </button>
-          </div>
-        </div>
-
-        <!-- Item 5: Original Laphing - ₹90 [Emerald / Green] -->
-        <div class="relative flex items-center bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-2xl p-3.5 shadow-lg shadow-emerald-950/40 text-white transition active:scale-[0.99] select-none min-h-[66px]">
-          <div class="flex-1 flex items-center justify-between pr-3 cursor-pointer" onclick="handleCardClick('item_orig')">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-base font-extrabold tracking-tight leading-tight">Original Laphing</h3>
-                <span id="qty_badge_item_orig" class="hidden px-2 py-0.5 rounded-full bg-white text-emerald-800 text-xs font-black shadow-sm">x0</span>
-              </div>
-              <p class="text-xs font-medium text-emerald-100/90 mt-0.5">Classic Mung Bean Jelly · Seitan</p>
-            </div>
-            <div class="text-right">
-              <span class="text-xl font-black tracking-tight">₹90</span>
-            </div>
-          </div>
-          <!-- Dual Action Controls (+ / -) -->
-          <div class="flex items-center gap-1.5 pl-2 border-l border-white/20">
-            <button id="minus_item_orig" onclick="decrementItem('item_orig')" class="w-9 h-9 rounded-xl bg-black/30 hover:bg-black/40 text-white font-black text-lg flex items-center justify-center active:scale-90 transition opacity-30 pointer-events-none" aria-label="Decrease Original Laphing">
-              &minus;
-            </button>
-            <button onclick="incrementItem('item_orig')" class="w-10 h-10 rounded-xl bg-white text-emerald-700 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase Original Laphing">
+            <button onclick="incrementItem('item_chk_soup')" class="w-10 h-10 rounded-xl bg-white text-red-700 font-black text-xl flex items-center justify-center shadow-md active:scale-90 transition" aria-label="Increase Chicken Soup">
               &plus;
             </button>
           </div>
@@ -232,8 +251,8 @@
       </section>
     </main>
 
-    <!-- Minimal Live Ticket Bar (Fixed Bottom Screen) -->
-    <footer class="flex-none bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 pt-3 pb-safe z-30">
+    <!-- Minimal Live Ticket Bar (Pinned Bottom Screen) -->
+    <footer class="shrink-0 flex-none bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 pt-3 pb-safe z-30">
       <div class="max-w-md mx-auto space-y-2.5">
         <!-- Ticket Meta: Total & Quick Reset -->
         <div class="flex items-center justify-between">
@@ -375,11 +394,12 @@
       (function() {
         // --- 1. HARDCODED MENU & STATE ---
         const MENU_ITEMS = {
-          item_ww_dry:  { id: 'item_ww_dry',  name: 'WaiWai Laphing (Dry)',  price: 70 },
-          item_ww_soup: { id: 'item_ww_soup', name: 'WaiWai Laphing (Soup)', price: 70 },
-          item_chk_dry: { id: 'item_chk_dry', name: 'Chicken Laphing (Dry)', price: 90 },
-          item_chk_soup:{ id: 'item_chk_soup',name: 'Chicken Laphing (Soup)',price: 90 },
-          item_orig:    { id: 'item_orig',    name: 'Original Laphing',       price: 90 }
+          item_ww_dry:  { id: 'item_ww_dry',  name: 'WaiWai Laphing (Dry)',  price: 70, category: 'waiwai' },
+          item_ww_soup: { id: 'item_ww_soup', name: 'WaiWai Laphing (Soup)', price: 70, category: 'waiwai' },
+          item_orig:    { id: 'item_orig',    name: 'Original Laphing',       price: 90, category: 'veg' },
+          item_paneer:  { id: 'item_paneer',  name: 'Paneer Laphing',         price: 90, category: 'veg' },
+          item_chk_dry: { id: 'item_chk_dry', name: 'Chicken Laphing (Dry)', price: 90, category: 'nonveg' },
+          item_chk_soup:{ id: 'item_chk_soup',name: 'Chicken Laphing (Soup)',price: 90, category: 'nonveg' }
         };
 
         const STORAGE_KEY_ORDERS = 'wow_laph_orders_v2';
@@ -390,9 +410,10 @@
         let activeTicket = {
           item_ww_dry: 0,
           item_ww_soup: 0,
+          item_orig: 0,
+          item_paneer: 0,
           item_chk_dry: 0,
-          item_chk_soup: 0,
-          item_orig: 0
+          item_chk_soup: 0
         };
 
         let paymentMethod = 'Cash'; // 'Cash' | 'UPI'
@@ -521,9 +542,10 @@
           activeTicket = {
             item_ww_dry: 0,
             item_ww_soup: 0,
+            item_orig: 0,
+            item_paneer: 0,
             item_chk_dry: 0,
-            item_chk_soup: 0,
-            item_orig: 0
+            item_chk_soup: 0
           };
           playSound('minus');
           renderTicketUI();
@@ -629,15 +651,35 @@
           activeTicket = {
             item_ww_dry: 0,
             item_ww_soup: 0,
+            item_orig: 0,
+            item_paneer: 0,
             item_chk_dry: 0,
-            item_chk_soup: 0,
-            item_orig: 0
+            item_chk_soup: 0
           };
 
           renderTicketUI();
           updateHeaderCount();
           renderRecentOrdersFeed();
         };
+
+        // Robust helper to extract and display ordered items
+        function extractItemsList(tx) {
+          if (Array.isArray(tx.items) && tx.items.length > 0) {
+            return tx.items.map(item => {
+              if (typeof item === 'string') return item;
+              if (item && item.name) return `${item.qty || 1}x ${item.name}`;
+              return String(item);
+            });
+          }
+          const raw = tx.itemsDetail || tx.items_detail || tx.itemsSummary || (typeof tx.items === 'string' ? tx.items : '') || '';
+          if (typeof raw === 'string' && raw.trim().length > 0) {
+            if (raw.includes('+')) return raw.split('+').map(s => s.trim()).filter(Boolean);
+            if (raw.includes(',')) return raw.split(',').map(s => s.trim()).filter(Boolean);
+            return [raw.trim()];
+          }
+          if (tx.itemsCount) return [`${tx.itemsCount}x Laphing Items`];
+          return ['1x Laphing Item'];
+        }
 
         // --- 7. RECENT ORDERS FEED (MAIN SCREEN SCROLL-DOWN) ---
         function renderRecentOrdersFeed() {
@@ -662,14 +704,7 @@
           let html = '';
           recentOrders.forEach((tx, idx) => {
             const isCash = tx.paymentMethod === 'Cash';
-            const rawItems = tx.itemsDetail || tx.items_detail || tx.itemsSummary || tx.items || '';
-            const itemsText = (typeof rawItems === 'string' && rawItems.trim().length > 0)
-              ? rawItems.trim()
-              : (tx.itemsCount ? `${tx.itemsCount}x Laphing Items` : 'Laphing Order');
-
-            const itemsList = itemsText.includes('+')
-              ? itemsText.split('+').map(s => s.trim()).filter(Boolean)
-              : itemsText.split(',').map(s => s.trim()).filter(Boolean);
+            const itemsList = extractItemsList(tx);
 
             html += `
               <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-3 shadow-md hover:border-slate-600 transition">
@@ -689,13 +724,18 @@
                 </div>
 
                 <!-- Highly Visible, Un-truncated Item Badges -->
-                <div class="flex flex-wrap gap-1.5 mt-2.5">
-                  ${itemsList.map(item => `
-                    <span class="inline-flex items-center gap-1.5 bg-slate-900 border border-slate-700/90 px-2.5 py-1 rounded-xl text-xs font-black text-amber-200 shadow-inner">
-                      <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                      <span>${item}</span>
-                    </span>
-                  `).join('')}
+                <div class="mt-2.5 pt-2 border-t border-slate-700/50">
+                  <div class="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-1.5 flex items-center gap-1">
+                    <span>🍜 Items Ordered:</span>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${itemsList.map(item => `
+                      <span class="inline-flex items-center gap-1.5 bg-slate-950 border border-slate-700/90 px-2.5 py-1 rounded-xl text-xs font-black shadow-inner">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 flex-none"></span>
+                        <span class="text-amber-200">${item}</span>
+                      </span>
+                    `).join('')}
+                  </div>
                 </div>
               </div>
             `;
@@ -787,14 +827,7 @@
           let html = '';
           todayTx.forEach(tx => {
             const isCash = tx.paymentMethod === 'Cash';
-            const rawItems = tx.itemsDetail || tx.items_detail || tx.itemsSummary || tx.items || '';
-            const itemsText = (typeof rawItems === 'string' && rawItems.trim().length > 0)
-              ? rawItems.trim()
-              : (tx.itemsCount ? `${tx.itemsCount}x Laphing Items` : 'Laphing Order');
-
-            const itemsList = itemsText.includes('+')
-              ? itemsText.split('+').map(s => s.trim()).filter(Boolean)
-              : itemsText.split(',').map(s => s.trim()).filter(Boolean);
+            const itemsList = extractItemsList(tx);
 
             html += `
               <div class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-3 text-xs shadow-sm">
@@ -811,12 +844,12 @@
                   </div>
                 </div>
 
-                <!-- Un-truncated items list -->
+                <!-- Un-truncated items list with clear badges -->
                 <div class="flex flex-wrap gap-1.5">
                   ${itemsList.map(item => `
-                    <span class="inline-flex items-center gap-1 bg-slate-900 border border-slate-700/80 px-2 py-0.5 rounded-lg text-xs font-bold text-amber-200">
+                    <span class="inline-flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 px-2 py-0.5 rounded-lg text-xs font-bold text-white shadow-sm">
                       <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                      <span>${item}</span>
+                      <span class="text-amber-200">${item}</span>
                     </span>
                   `).join('')}
                 </div>
@@ -903,9 +936,10 @@
           activeTicket = {
             item_ww_dry: 0,
             item_ww_soup: 0,
+            item_orig: 0,
+            item_paneer: 0,
             item_chk_dry: 0,
-            item_chk_soup: 0,
-            item_orig: 0
+            item_chk_soup: 0
           };
 
           playSound('complete');
