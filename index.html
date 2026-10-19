@@ -52,6 +52,9 @@
       .pb-safe {
         padding-bottom: max(1rem, env(safe-area-inset-bottom));
       }
+      .h-13 {
+        height: 3.25rem;
+      }
     </style>
   </head>
   <body class="h-[100dvh] max-h-[100dvh] w-full overflow-hidden flex flex-col bg-slate-900 text-slate-100 antialiased select-none">
@@ -254,24 +257,27 @@
     <!-- Minimal Live Ticket Bar (Pinned Bottom Screen) -->
     <footer class="shrink-0 flex-none bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 pt-3 pb-safe z-30">
       <div class="max-w-md mx-auto space-y-2.5">
-        <!-- Ticket Meta: Total & Quick Reset -->
+        <!-- Ticket Meta: Total & Payment Mode Label -->
         <div class="flex items-center justify-between">
           <div class="flex items-baseline gap-2">
             <span class="text-2xl font-black text-white" id="ticketTotalAmount">₹0</span>
             <span class="text-xs font-semibold text-slate-400" id="ticketItemsCount">(0 Items)</span>
           </div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full">
+            Payment Mode
+          </span>
+        </div>
 
-          <!-- Payment Method Pill Switches (Cash vs UPI) -->
-          <div class="flex items-center bg-slate-800 p-0.5 rounded-xl border border-slate-700/80">
-            <button id="payMethodCash" onclick="setPaymentMethod('Cash')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-white shadow-sm flex items-center gap-1">
-              <span>💵</span>
-              <span>Cash</span>
-            </button>
-            <button id="payMethodUPI" onclick="setPaymentMethod('UPI')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1">
-              <span>📱</span>
-              <span>UPI</span>
-            </button>
-          </div>
+        <!-- Payment Method Toggle: Prominent 2-Column Grid (Cash vs UPI) -->
+        <div class="grid grid-cols-2 gap-3">
+          <button id="payMethodCash" onclick="setPaymentMethod('Cash')" type="button" class="h-13 py-3 rounded-xl text-base font-bold transition flex items-center justify-center gap-2 bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 border border-emerald-400 ring-2 ring-emerald-400/40 active:scale-[0.98]">
+            <span class="text-lg">💵</span>
+            <span>Cash</span>
+          </button>
+          <button id="payMethodUPI" onclick="setPaymentMethod('UPI')" type="button" class="h-13 py-3 rounded-xl text-base font-bold transition flex items-center justify-center gap-2 bg-slate-900/90 text-slate-400 border border-slate-700/80 hover:bg-slate-800 hover:text-white active:scale-[0.98]">
+            <span class="text-lg">📱</span>
+            <span>UPI</span>
+          </button>
         </div>
 
         <!-- Action Row: Complete Order (Full Width) + Small Reset Button -->
@@ -527,13 +533,20 @@
           const cashBtn = document.getElementById('payMethodCash');
           const upiBtn = document.getElementById('payMethodUPI');
 
+          const CASH_ACTIVE = 'h-13 py-3 rounded-xl text-base font-bold transition flex items-center justify-center gap-2 bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 border border-emerald-400 ring-2 ring-emerald-400/40 active:scale-[0.98]';
+          const CASH_INACTIVE = 'h-13 py-3 rounded-xl text-base font-bold transition flex items-center justify-center gap-2 bg-slate-900/90 text-slate-400 border border-slate-700/80 hover:bg-slate-800 hover:text-white active:scale-[0.98]';
+
+          const UPI_ACTIVE = 'h-13 py-3 rounded-xl text-base font-bold transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 border border-indigo-400 ring-2 ring-indigo-400/40 active:scale-[0.98]';
+          const UPI_INACTIVE = 'h-13 py-3 rounded-xl text-base font-bold transition flex items-center justify-center gap-2 bg-slate-900/90 text-slate-400 border border-slate-700/80 hover:bg-slate-800 hover:text-white active:scale-[0.98]';
+
           if (method === 'Cash') {
-            cashBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-emerald-500 text-white shadow-sm flex items-center gap-1';
-            upiBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1';
+            if (cashBtn) cashBtn.className = CASH_ACTIVE;
+            if (upiBtn) upiBtn.className = UPI_INACTIVE;
           } else {
-            cashBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-400 hover:text-white flex items-center gap-1';
-            upiBtn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow-sm flex items-center gap-1';
+            if (cashBtn) cashBtn.className = CASH_INACTIVE;
+            if (upiBtn) upiBtn.className = UPI_ACTIVE;
           }
+          playSound('add');
         };
 
         window.resetActiveTicket = function() {
